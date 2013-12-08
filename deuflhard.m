@@ -33,18 +33,23 @@ function [ q, dq ] = deuflhard(omega, g, q0, dq0, h, N, progress)
     end
     
     ho = h*omega;
+    cosho = cos(ho);
+    sincho = sinc(ho*pi)*pi;
+    sinho = sin(ho);
     
     %initialize second startvalue (two-step formulation)
-    q1 = cos(ho)*q0(:) + sinc(ho)*h*dq0(:) + h^2*sinc(ho)*g(q0(:));
-    dq1 = -ho*sin(ho)*q0(:) + cos(ho)*h*dq0(:) + h^2*(g(q1(:)) + cos(ho)*g(q0(:)));
+    q1 = cosho*q0 + sincho*h*dq0 + h^2*sincho*g(q0)/2;
+    dq1 = -ho*sinho*q0/h + cosho*dq0 + (h/2)*(g(q1) + cosho*g(q0));
     
-    q = [q0 q1 zeros(dim, N)];
-    dq = [dq0 dq1 zeros(dim, N)];
+    q = [q0 q1 zeros(dim, N-2)];
+    dq = [dq0 dq1 zeros(dim, N-2)];
 
     for n = 3:N;
-        q(:, n) = h^2*sinc(ho)*g(q(:, n-1)) + 2*cos(ho)*q(:, n-1) - q(:, n-2);
-        dq(:, n) = h*(g(q(:, n))-g(q(:, n-2)))/2 + 2*cos(ho)*dq(:, n-1) - dq(:, n-2);
-
+        q(:, n) = h^2*sincho*g(q(:, n-1)) + ...
+            2*cosho*q(:, n-1) - q(:, n-2);
+        dq(:, n) = h*(g(q(:, n))-g(q(:, n-2)))/2 + ...
+            2*cosho*dq(:, n-1) - dq(:, n-2);
+        
         if progress && mod(n, percent) == 0
             fprintf('\b\b\b\b\b%4d%%', n/percent);
         end
