@@ -43,7 +43,7 @@ function [ q, dq ] = deuflhard(omega, g, q0, dq0, h, N, progress)
 
     for n = 3:N;
         q(:, n) = h^2*sinc(ho)*g(q(:, n-1)) + 2*cos(ho)*q(:, n-1) - q(:, n-2);
-        dq(:, n) = h*(g(q(n))-g(q(n-2)))/2 + 2*cos(ho)*dq(:, n-1) - dq(:, n-2);
+        dq(:, n) = h*(g(q(:, n))-g(q(:, n-2)))/2 + 2*cos(ho)*dq(:, n-1) - dq(:, n-2);
 
         if progress && mod(n, percent) == 0
             fprintf('\b\b\b\b\b%4d%%', n/percent);
