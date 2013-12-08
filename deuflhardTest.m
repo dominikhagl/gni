@@ -27,6 +27,12 @@ h = 0.001;
 tic
 
 % Deuflhard method
-[q, dq] = deuflhard(A^0.5, g, q0, dq0, h, N, true);
+[x, y] = deuflhard(A^0.5, g, q0, dq0, h, N, true);
 
 toc
+
+%Hagl plotte bitte:
+I1 = 0.5*(y(4).^2 + omega^2*x(4).^2);
+I2 = 0.5*(y(5).^2 + omega^2*x(5).^2);
+I3 = 0.5*(y(6).^2 + omega^2*x(6).^2);
+I = I1+I2+I3;
