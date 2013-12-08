@@ -1,5 +1,5 @@
 function [ q, dq ] = deuflhard(omega, g, q0, dq0, h, N, progress)
-%VERLET ODE solver with Deuflhard's trigonometric method
+%DEUFLHARD ODE solver with Deuflhard's trigonometric method
 %   Evaluates a ODE of the form
 %       d^2(q)/dt^2 = -omega^2*q+g(q)
 %   with starting values q0 for q and dq0 for d(q)/dt at t=0
