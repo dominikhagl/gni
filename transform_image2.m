@@ -33,8 +33,8 @@ function [X, coords_p, coords_q, colormap, alpha] = ...
     for i = 1:m
         for j = 1:n
             % Map pixel positions to p and q values
-            p0 = scaleToRange(i, p_range, [1 m]);
-            q0 = scaleToRange(j, q_range, [1 n]);
+            q0 = scaleToRange(i, q_range, [1 m]);
+            p0 = scaleToRange(j, p_range, [1 n]);
             R = fun(p0, q0);
             P(i, j) = R(1);
             Q(i, j) = R(2);
@@ -51,8 +51,8 @@ function [X, coords_p, coords_q, colormap, alpha] = ...
     coords_q = [q_min q_max];
 
     % Get the size (i.e. number of pixels) of the transformed image
-    size_x = ceil(scaleToRange(q_max, [1 n], [q_min q_max]));
-    size_y = ceil(scaleToRange(p_max, [1 m], [p_min p_max]));
+    size_x = ceil(scaleToRange(p_max, [1 n], [p_min p_max]));
+    size_y = ceil(scaleToRange(q_max, [1 m], [q_min q_max]));
     X = 255 * ones(size_y, size_x, d, 'uint8');
     alpha = false(size_y, size_x);
 
@@ -66,8 +66,8 @@ function [X, coords_p, coords_q, colormap, alpha] = ...
             p = P(i, j);
             q = Q(i, j);
             
-            x = round(scaleToRange(q, [1 n], [q_min q_max]));
-            y = round(scaleToRange(p, [1 m], [p_min p_max]));
+            x = round(scaleToRange(p, [1 n], [p_min p_max]));
+            y = round(scaleToRange(q, [1 m], [q_min q_max]));
             X(y, x, :) = I(i, j, :); % get corresponding value of a pixel
             alpha(y, x) = 1; % only make transformed pixels visible
         end

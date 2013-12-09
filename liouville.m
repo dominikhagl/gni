@@ -47,7 +47,8 @@ yT = zeros(1, M);
 Theta = zeros(N+1, M);
 A = zeros(N+1, M);
 
-% I = zeros(N+1, M);
+tic;
+disp('Calculation action angle coordinates...');
 
 k = 0;
 for q0 = 0
@@ -107,11 +108,8 @@ for q0 = 0
     end
 end
 
-% useplot(3, 2);
-% for k = 1:M
-%     color = colorOrder(mod(k, c)+1, :);
-%     plot(Theta(1:I(k), k), A(1:I(k), k), 'Color', color, 'UserData', k);
-% end
+toc
+disp('Reverting calculations...');
 
 X2 = zeros(N+1, M);
 Y2 = zeros(N+1, M);
@@ -148,7 +146,6 @@ useplot(1, 2);
 for k = 1:M
     color = colorOrder(mod(k, c)+1, :);
     
-%     p0 = sign(X2(1, k)) * sqrt(2 * abs(X2(1, k)));
     p0 = sqrt(2 * X2(1, k) + 2);
     p = zeros(1, N+1);
     q = zeros(1, N+1);
@@ -192,89 +189,59 @@ end
 set(gcf, 'WindowButtonDownFcn', @highlight);
 % datacursormode on
 
+toc
+
+%% Plot cats
+disp('Plotting cats...');
+
+how_many_cats = 4;
+fprintf('0/%d', how_many_cats);
+
 range_theta = [.3 1];
 range_a = [.1 2.3];
 
-f = @(theta, a) [ ...
-    0.755905 * (...
-            sqrt(10.9396*a.^2-30.9589*a+27.2638) + ...
-            3.3075*a-4.68011).^(1/3) - ...
-            1.32292./(sqrt(10.9396*a.^2-30.9589*a+27.2638) + ...
-            3.3075*a - 4.68011 ...
-        ).^(1/3), ...
-    theta * 4*ellipk(sqrt((1+0.755905 * (...
-            sqrt(10.9396*a.^2-30.9589*a+27.2638) + ...
-            3.3075*a-4.68011).^(1/3) - ...
-            1.32292./(sqrt(10.9396*a.^2-30.9589*a+27.2638) + ...
-            3.3075*a - 4.68011 ...
-        ).^(1/3))/2)) / (2*pi) ...
-    ];
-
-g = @(x, y) [ ...
-        sqrt(2*x + 2) * cos(y), ...
-        2 * asin(sqrt(2*x + 2)/2 * sin(y)) ...
-    ];
-
 useplot(3, 2);
-[im, colormap, alpha] = imread('images/cat24_small.png');
-im = flipdim(im, 1);
-alpha = flipdim(alpha, 1);
+[im, colormap, alpha] = imread('images/cat24.png');
+imAA = flipdim(im, 1); % image in action angle coords
+alphaAA = flipdim(alpha, 1);
 
-image(range_theta, range_a, im, 'AlphaData', alpha);
-colormap(colormap);
+image(range_theta, range_a, imAA, 'AlphaData', alphaAA);
 
-I = cell(1, 1);
-A = cell(1, 1);
+e = @(y, x) [ ...
+        2 * asin(sqrt(2*x + 2)/2 * sin(y)), ...
+        sqrt(2*x + 2) * cos(y) ...
+    ];
 
-I{1} = im;
-A{1} = alpha;
+for l = 1:how_many_cats
+    im = imAA;
+    alpha = alphaAA;
 
-for l=2:size(I, 2)
-    [im, range_theta, range_a, colormap, alpha] = ...
-        transform_image2(im, colormap, alpha, range_theta, range_a, @action_angle);
-    useplot(3, 2);
-    image(range_theta, range_a, im, 'AlphaData', alpha);
-    colormap(colormap);
-    
-    I{l} = im;
-end
-
-for l=1:size(I, 2)
-    im = I{l};
-    alpha = A{l};
-    
-    [im, range_x, range_y, colormap, alpha] = ...
-        transform_image2(im, colormap, alpha, range_theta, range_a, f);
+    [im, range_y, range_x, ~, alpha] = ...
+        transform_image2(im, colormap, alpha, range_theta, range_a, @revert_action_angle);
     useplot(2, 2);
     image(range_y, range_x, im, 'AlphaData', alpha);
-    colormap(colormap);
-
-    [im, range_p, range_q, colormap, alpha] = ...
-        transform_image2(im, colormap, alpha, range_x, range_y, g);
+    
+    [im, range_q, range_p, ~, alpha] = ...
+        transform_image2(im, colormap, alpha, range_y, range_x, e);
     useplot(1, 2);
     image(range_q, range_p, im, 'AlphaData', alpha);
-    colormap(colormap);
+
+    fprintf('\b\b\b%d/%d', l, how_many_cats);
+
+    if l == how_many_cats
+        fprintf('\b\b\b');
+        break;
+    end
+
+    [imAA, range_theta, range_a, ~, alphaAA] = ...
+        transform_image2(imAA, colormap, alphaAA, range_theta, range_a, @action_angle);
+    useplot(3, 2);
+    image(range_theta, range_a, imAA, 'AlphaData', alphaAA);
 end
 
-% range_p = [.45 1.6];
-% range_q = [-.5 .5];
-% h = pi/3;
-% N = 8;
-% 
-% [X, p_range, q_range, colorMap, alpha] = ...
-%     transform_image('images/cat24_small.png', range_p, range_q, ...
-%         @(dp, dq, p0, q0, h, N) verlet(@(q) dp(0, q), p0, q0, h, N), ...
-%         dp, dq, h, N);
-% 
-% useplot(1, 1);
-% for i = 2:2:8;
-%     image(q_range{i}, p_range{i}, X{i}, 'AlphaData', alpha{i});
-% end
-% colormap(colorMap);
-% axis([-pi pi -2 2])
+toc
 
-% useplot(2, 1);
-% axis([0 4*pi -1 1])
-
-
-
+for l = 1:n
+    useplot(l, 2);
+    colormap(colormap);
+end

@@ -1,0 +1,16 @@
+function res = revert_action_angle(theta, a)
+%REVERT_ACTION_ANGLE Summary of this function goes here
+%   Detailed explanation goes here
+
+	x = 0.755905 * (...
+            sqrt(10.9396*a.^2-30.9589*a+27.2638) + ...
+            3.3075*a-4.68011).^(1/3) - ...
+            1.32292./(sqrt(10.9396*a.^2-30.9589*a+27.2638) + ...
+            3.3075*a - 4.68011 ...
+        ).^(1/3);
+    g = 4*ellipk(sqrt((1+x)/2));
+    y = theta * g/(2*pi);
+
+    res = [ y, x ];
+end
+

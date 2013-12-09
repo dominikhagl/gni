@@ -3,7 +3,7 @@ function res = action_angle(theta, a, delta)
 %   Transports theta and a for time delta (default: 1)
 
     if nargin < 3
-        delta = 1;
+        delta = 1.7;
     end
 
     x = 0.755905 * (...
