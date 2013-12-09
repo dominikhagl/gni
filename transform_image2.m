@@ -1,16 +1,33 @@
 function [X, coords_p, coords_q, colormap, alpha] = ...
-    transform_image2(filename, p_range, q_range, fun)
+    transform_image2(varargin)
 
-
-    [I, colormap, alpha_org] = imread(filename);
-    [m, n, d] = size(I);
-%     I = I(end:-1:1, :, :);
-    I = flipdim(I, 1);
-    alpha_org = flipdim(alpha_org, 1);
+    if nargin < 6
+        filename = varargin{1};
+        p_range = varargin{2};
+        q_range = varargin{3};
+        fun = varargin{4};
+        
+        [I, colormap, alpha_org] = imread(filename);
+        [m, n, d] = size(I);
+        I = flipdim(I, 1);
+        alpha_org = flipdim(alpha_org, 1);
+    else
+        I = varargin{1};
+        colormap = varargin{2};
+        alpha_org = varargin{3};
+        p_range = varargin{4};
+        q_range = varargin{5};
+        fun = varargin{6};
+        
+        [m, n, d] = size(I);
+    end
     
     if min(size(alpha_org)) == 0
         alpha_org = ones(m, n);
     end
+    
+    P = zeros(m, n);
+    Q = zeros(m, n);
     
     %% Solve the ODE at each pixel
     for i = 1:m
@@ -19,8 +36,8 @@ function [X, coords_p, coords_q, colormap, alpha] = ...
             p0 = scaleToRange(i, p_range, [1 m]);
             q0 = scaleToRange(j, q_range, [1 n]);
             R = fun(p0, q0);
-            P = R(1);
-            Q = R(2);
+            P(i, j) = R(1);
+            Q(i, j) = R(2);
         end
     end
     
@@ -48,7 +65,7 @@ function [X, coords_p, coords_q, colormap, alpha] = ...
 
             p = P(i, j);
             q = Q(i, j);
-            %n+1-
+            
             x = round(scaleToRange(q, [1 n], [q_min q_max]));
             y = round(scaleToRange(p, [1 m], [p_min p_max]));
             X(y, x, :) = I(i, j, :); % get corresponding value of a pixel

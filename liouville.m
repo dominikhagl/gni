@@ -47,7 +47,7 @@ yT = zeros(1, M);
 Theta = zeros(N+1, M);
 A = zeros(N+1, M);
 
-I = zeros(N+1, M);
+% I = zeros(N+1, M);
 
 k = 0;
 for q0 = 0
@@ -62,31 +62,19 @@ for q0 = 0
         useplot(1, 1);
         plot(q, p, '-', 'Color', color, 'UserData', k);
         
-        g = N * h;
-        diff_min = 0;
-        start = true;
-        for i = 1:length(p)
-            diff = norm([p(:, i); q(:, i)] - [p0; q0]);
-            if start
-                if diff >= diff_min
-                    diff_min = diff;
-                else
-                    start = false;
-                end
-            else
-                if diff < diff_min
-                    diff_min = diff;
-                    g = i * h;
-                else
-                    break;
-                end
-            end
-        end
-        
-        I(k) = i;
+%         i = period([p; q])
+%         g = i * h;
         
         x = H(p, q);
         y = 0:h:h*N;
+        
+        % http://en.wikipedia.org/wiki/Pendulum_(mathematics)#Arbitrary-amplitude_period
+        %g = 4*ellipk(sin(acos(-x(1))/2));
+        % http://www.wolframalpha.com/input/?i=sin%28acos%28x%29%2F2%29
+        g = 4*ellipk(sqrt((1+x(1))/2));
+        i = round(g / h);
+        
+%         I(k) = i;
         
         useplot(2, 1);
         plot(y(:, 1:i), x(:, 1:i), '-', 'Color', color, 'UserData', k);
@@ -98,22 +86,32 @@ for q0 = 0
         yT(k) = y(:, i);
         
         theta = 2*pi / g * y;
-        a = g * abs(x + 1) / (2*pi);
-        
+        %a = g * abs(x + 1) / (2*pi);
+        % http://www.wolframalpha.com/input/?i=integral+16*y*K%28y%29+from+0+to+sqrt%28%28H%2B1%29%2F2%29
+        [~, E] = ellipke(sqrt((x+1)/2));
+        a = (8/9/pi) * (...
+                ((3*x)+sqrt(2*(x+1))-5).*ellipk(sqrt((1+x(1))/2)) + ...
+                (sqrt(2*(x+1))+8).*E ...
+            );
+%         a = .35*x.^3 + 1.05*x + 1.415;
+
         Theta(:, k) = theta';
         A(:, k) = a';
         
         useplot(3, 1);
         plot(theta(:, 1:i), a(:, 1:i), '-', 'Color', color, 'UserData', k);
         
+        useplot(3, 2);
+        plot(theta(:, 1:i), a(:, 1:i), '-', 'Color', color, 'UserData', k);
+        
     end
 end
 
-useplot(3, 2);
-for k = 1:M
-    color = colorOrder(mod(k, c)+1, :);
-    plot(Theta(1:I(k), k), A(1:I(k), k), 'Color', color, 'UserData', k);
-end
+% useplot(3, 2);
+% for k = 1:M
+%     color = colorOrder(mod(k, c)+1, :);
+%     plot(Theta(1:I(k), k), A(1:I(k), k), 'Color', color, 'UserData', k);
+% end
 
 X2 = zeros(N+1, M);
 Y2 = zeros(N+1, M);
@@ -125,14 +123,25 @@ for k = 1:M
     
     theta = Theta(:, k)';
     a = A(:, k);
-    g = max([I(k); 1]) * h;
-    x = 2*pi*a/g - 1;
-    y = theta * g/(2*pi);
+%     g = max([I(k); 1]) * h;
+%     x = 2*pi*a/g - 1;
+%     y = theta * g/(2*pi);
     
+    x = 0.755905 * (...
+            sqrt(10.9396*a.^2-30.9589*a+27.2638) + ...
+            3.3075*a-4.68011).^(1/3) - ...
+            1.32292./(sqrt(10.9396*a.^2-30.9589*a+27.2638) + ...
+            3.3075*a - 4.68011 ...
+        ).^(1/3);
+    g = 4*ellipk(sqrt((1+x(1))/2));
+    y = theta * g/(2*pi);
+
     X2(:, k) = x';
     Y2(:, k) = y';
     
-    plot(y(1:I(k)), x(1:I(k)), '-', 'Color', color, 'UserData', k);
+    i = round(g / h);
+    
+    plot(y(1:i), x(1:i), '-', 'Color', color, 'UserData', k);
 end
 
 useplot(1, 2);
@@ -186,13 +195,66 @@ set(gcf, 'WindowButtonDownFcn', @highlight);
 range_theta = [.3 1];
 range_a = [.1 2.3];
 
-% transform_image2('images/cat24_small.png', range_theta, range_a, ...
-%     @(theta, a) [ (2*pi*a-g)/g, theta*g/(2*pi) ]);
+f = @(theta, a) [ ...
+    0.755905 * (...
+            sqrt(10.9396*a.^2-30.9589*a+27.2638) + ...
+            3.3075*a-4.68011).^(1/3) - ...
+            1.32292./(sqrt(10.9396*a.^2-30.9589*a+27.2638) + ...
+            3.3075*a - 4.68011 ...
+        ).^(1/3), ...
+    theta * 4*ellipk(sqrt((1+0.755905 * (...
+            sqrt(10.9396*a.^2-30.9589*a+27.2638) + ...
+            3.3075*a-4.68011).^(1/3) - ...
+            1.32292./(sqrt(10.9396*a.^2-30.9589*a+27.2638) + ...
+            3.3075*a - 4.68011 ...
+        ).^(1/3))/2)) / (2*pi) ...
+    ];
+
+g = @(x, y) [ ...
+        sqrt(2*x + 2) * cos(y), ...
+        2 * asin(sqrt(2*x + 2)/2 * sin(y)) ...
+    ];
 
 useplot(3, 2);
-[im, colorMap, alpha] = imread('images/cat24_small.png');
+[im, colormap, alpha] = imread('images/cat24_small.png');
+im = flipdim(im, 1);
+alpha = flipdim(alpha, 1);
+
 image(range_theta, range_a, im, 'AlphaData', alpha);
-colormap(colorMap);
+colormap(colormap);
+
+I = cell(1, 1);
+A = cell(1, 1);
+
+I{1} = im;
+A{1} = alpha;
+
+for l=2:size(I, 2)
+    [im, range_theta, range_a, colormap, alpha] = ...
+        transform_image2(im, colormap, alpha, range_theta, range_a, @action_angle);
+    useplot(3, 2);
+    image(range_theta, range_a, im, 'AlphaData', alpha);
+    colormap(colormap);
+    
+    I{l} = im;
+end
+
+for l=1:size(I, 2)
+    im = I{l};
+    alpha = A{l};
+    
+    [im, range_x, range_y, colormap, alpha] = ...
+        transform_image2(im, colormap, alpha, range_theta, range_a, f);
+    useplot(2, 2);
+    image(range_y, range_x, im, 'AlphaData', alpha);
+    colormap(colormap);
+
+    [im, range_p, range_q, colormap, alpha] = ...
+        transform_image2(im, colormap, alpha, range_x, range_y, g);
+    useplot(1, 2);
+    image(range_q, range_p, im, 'AlphaData', alpha);
+    colormap(colormap);
+end
 
 % range_p = [.45 1.6];
 % range_q = [-.5 .5];
