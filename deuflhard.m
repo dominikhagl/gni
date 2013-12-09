@@ -34,7 +34,7 @@ function [ q, dq ] = deuflhard(omega, g, q0, dq0, h, N, progress)
     
     ho = h*omega;
     cosho = cos(ho);
-    sincho = sinc(ho*pi)*pi;
+    sincho = sinc(ho/pi);
     sinho = sin(ho);
     
     %initialize second startvalue (two-step formulation)
